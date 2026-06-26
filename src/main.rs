@@ -63,6 +63,18 @@ enum Commands {
     },
     /// Validate agent capability requirements
     Validate,
+    /// Import an existing MCP server by introspecting its tools
+    Import {
+        /// Package name (e.g. io.github.stripe/payments)
+        #[arg(long)]
+        name: String,
+        /// Command to start the server (followed by its args after --)
+        #[arg(long)]
+        command: String,
+        /// Arguments for the command
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -77,5 +89,10 @@ fn main() -> Result<()> {
         Commands::Audit => commands::audit::run(),
         Commands::Fetch { name, source } => commands::fetch::run(&name, &source),
         Commands::Validate => commands::validate::run(),
+        Commands::Import {
+            name,
+            command,
+            args,
+        } => commands::import::run(&name, &command, &args),
     }
 }

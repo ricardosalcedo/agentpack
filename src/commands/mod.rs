@@ -3,6 +3,7 @@ pub mod audit;
 pub mod export;
 pub mod fetch;
 pub mod graph;
+pub mod import;
 pub mod init;
 pub mod install;
 pub mod run;
