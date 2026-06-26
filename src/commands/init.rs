@@ -1,7 +1,8 @@
-use crate::manifest::Manifest;
 use anyhow::{bail, Result};
 use std::collections::BTreeMap;
 use std::env;
+
+use crate::manifest::Manifest;
 
 pub fn run() -> Result<()> {
     if Manifest::exists() {
@@ -22,6 +23,8 @@ pub fn run() -> Result<()> {
         dependencies: BTreeMap::new(),
         agents: BTreeMap::new(),
         provides: None,
+        requires: vec![],
+        profiles: BTreeMap::new(),
         tools: vec![],
     };
 

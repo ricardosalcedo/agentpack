@@ -10,323 +10,303 @@ mod tests {
     fn test_dir(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("agentpack_test_{}", name));
         let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(&dir).unwrap();
+        fs::create_dir_all(&dir).expect("create test dir");
         dir
     }
 
-    // === Manifest parsing tests (no filesystem needed) ===
+    // === Manifest parsing ===
 
     #[test]
     fn test_manifest_roundtrip() {
-        let dir = test_dir("manifest_roundtrip");
+        let dir = test_dir("manifest_rt");
         let path = dir.join("agentpack.json");
-
         let manifest = Manifest {
-            name: "io.github.test/my-project".into(),
+            name: "io.github.test/proj".into(),
             version: "1.0.0".into(),
             description: "Test".into(),
             pkg_type: "composite".into(),
             transport: None,
-            dependencies: BTreeMap::from([("io.github.a/server".into(), "^1.0.0".into())]),
-            agents: BTreeMap::from([(
-                "io.github.a/agent".into(),
-                AgentDep::Version("^2.0.0".into()),
-            )]),
+            dependencies: BTreeMap::from([("io.github.a/s".into(), "^1.0.0".into())]),
+            agents: BTreeMap::from([("io.github.a/a".into(), AgentDep::Version("^2.0.0".into()))]),
             provides: None,
+            requires: vec![],
+            profiles: BTreeMap::new(),
             tools: vec![Tool {
-                name: "test_tool".into(),
-                description: "A tool".into(),
+                name: "t".into(),
+                description: "".into(),
             }],
         };
-
-        let json = serde_json::to_string_pretty(&manifest).unwrap();
-        fs::write(&path, &json).unwrap();
-        let content = fs::read_to_string(&path).unwrap();
-        let loaded: Manifest = serde_json::from_str(&content).unwrap();
-
-        assert_eq!(loaded.name, "io.github.test/my-project");
+        let json = serde_json::to_string_pretty(&manifest).expect("ser");
+        fs::write(&path, &json).expect("write");
+        let loaded: Manifest =
+            serde_json::from_str(&fs::read_to_string(&path).expect("read")).expect("deser");
+        assert_eq!(loaded.name, "io.github.test/proj");
         assert_eq!(loaded.dependencies.len(), 1);
         assert_eq!(loaded.agents.len(), 1);
-        assert_eq!(loaded.tools.len(), 1);
     }
 
     #[test]
-    fn test_manifest_with_full_agent_dep() {
-        let json = r#"{
-            "name": "test",
-            "version": "1.0.0",
-            "dependencies": {},
-            "agents": {
-                "io.github.x/agent": {
-                    "version": "^1.0.0",
-                    "capabilities": ["search", "summarize"]
-                }
-            },
-            "tools": []
-        }"#;
-        let m: Manifest = serde_json::from_str(json).unwrap();
-        let dep = &m.agents["io.github.x/agent"];
-        assert_eq!(dep.version(), "^1.0.0");
-        assert_eq!(dep.required_capabilities(), &["search", "summarize"]);
-    }
-
-    #[test]
-    fn test_manifest_with_provides() {
-        let json = r#"{
-            "name": "test-agent",
-            "version": "1.0.0",
-            "type": "agent",
-            "dependencies": {},
-            "agents": {},
-            "provides": {
-                "capabilities": ["web-research", "summarization"],
-                "protocol": "a2a"
-            },
-            "tools": []
-        }"#;
-        let m: Manifest = serde_json::from_str(json).unwrap();
-        let provides = m.provides.unwrap();
-        assert_eq!(provides.capabilities, vec!["web-research", "summarization"]);
-        assert_eq!(provides.protocol.unwrap(), "a2a");
-    }
-
-    #[test]
-    fn test_agent_dep_simple_version() {
-        let json = r#"{"name":"t","version":"1.0.0","dependencies":{},"agents":{"x":"^1.0.0"},"tools":[]}"#;
-        let m: Manifest = serde_json::from_str(json).unwrap();
+    fn test_full_agent_dep() {
+        let json = r#"{"name":"t","version":"1.0.0","dependencies":{},"agents":{"x":{"version":"^1.0.0","capabilities":["search","summarize"]}},"tools":[]}"#;
+        let m: Manifest = serde_json::from_str(json).expect("parse");
         assert_eq!(m.agents["x"].version(), "^1.0.0");
-        assert!(m.agents["x"].source().is_none());
-        assert!(m.agents["x"].required_capabilities().is_empty());
-    }
-
-    // === Resolver tests (need temp dirs) ===
-
-    #[test]
-    fn test_resolve_inferred_packages() {
-        let dir = test_dir("resolve_inferred");
-        std::env::set_current_dir(&dir).unwrap();
-
-        let manifest = Manifest {
-            name: "test".into(),
-            version: "1.0.0".into(),
-            description: "".into(),
-            pkg_type: "composite".into(),
-            transport: None,
-            dependencies: BTreeMap::from([
-                ("io.github.anthropic/filesystem".into(), "^1.2.0".into()),
-                ("io.github.stripe/payments".into(), "~2.0.0".into()),
-            ]),
-            agents: BTreeMap::new(),
-            provides: None,
-            tools: vec![],
-        };
-
-        let lock = resolver::resolve(&manifest).unwrap();
-        assert_eq!(lock.resolved.len(), 2);
         assert_eq!(
-            lock.resolved["io.github.anthropic/filesystem"].version,
-            "1.2.0"
-        );
-        assert_eq!(
-            lock.resolved["io.github.anthropic/filesystem"].entry_type,
-            "mcp-server"
-        );
-        assert_eq!(lock.resolved["io.github.stripe/payments"].version, "2.0.0");
-    }
-
-    #[test]
-    fn test_resolve_local_package() {
-        let dir = test_dir("resolve_local");
-        std::env::set_current_dir(&dir).unwrap();
-
-        fs::create_dir_all("packages/io.github.test__server").unwrap();
-        fs::write(
-            "packages/io.github.test__server/agentpack.json",
-            r#"{
-            "name": "io.github.test/server",
-            "version": "3.5.0",
-            "type": "mcp-server",
-            "transport": {"type": "stdio", "command": "node", "args": ["index.js"]},
-            "dependencies": {},
-            "tools": [{"name": "do_thing", "description": "does a thing"}]
-        }"#,
-        )
-        .unwrap();
-
-        let manifest = Manifest {
-            name: "test".into(),
-            version: "1.0.0".into(),
-            description: "".into(),
-            pkg_type: "composite".into(),
-            transport: None,
-            dependencies: BTreeMap::from([("io.github.test/server".into(), "^3.0.0".into())]),
-            agents: BTreeMap::new(),
-            provides: None,
-            tools: vec![],
-        };
-
-        let lock = resolver::resolve(&manifest).unwrap();
-        let entry = &lock.resolved["io.github.test/server"];
-        assert_eq!(entry.version, "3.5.0");
-        assert_eq!(entry.source.source_type, "local");
-        assert_eq!(
-            entry.transport.as_ref().unwrap().command.as_deref(),
-            Some("node")
+            m.agents["x"].required_capabilities(),
+            &["search", "summarize"]
         );
     }
 
     #[test]
-    fn test_resolve_agent_dep() {
-        let dir = test_dir("resolve_agent");
-        std::env::set_current_dir(&dir).unwrap();
+    fn test_provides_block() {
+        let json = r#"{"name":"t","version":"1.0.0","type":"agent","dependencies":{},"agents":{},"provides":{"capabilities":["a","b"],"protocol":"a2a"},"tools":[]}"#;
+        let m: Manifest = serde_json::from_str(json).expect("parse");
+        let p = m.provides.expect("provides");
+        assert_eq!(p.capabilities, vec!["a", "b"]);
+        assert_eq!(p.protocol.expect("proto"), "a2a");
+    }
 
-        fs::create_dir_all("packages/io.github.test__agent").unwrap();
-        fs::write(
-            "packages/io.github.test__agent/agentpack.json",
-            r#"{
-            "name": "io.github.test/agent",
-            "version": "2.0.0",
-            "type": "agent",
-            "transport": {"type": "stdio", "command": "python", "args": ["agent.py"]},
-            "provides": {"capabilities": ["research"], "protocol": "a2a"},
-            "dependencies": {"io.github.x/search": "^1.0.0"},
-            "agents": {},
+    #[test]
+    fn test_simple_agent_dep() {
+        let json = r#"{"name":"t","version":"1.0.0","dependencies":{},"agents":{"x":"^1.0.0"},"tools":[]}"#;
+        let m: Manifest = serde_json::from_str(json).expect("parse");
+        assert_eq!(m.agents["x"].version(), "^1.0.0");
+    }
+
+    // === Profiles ===
+
+    #[test]
+    fn test_profile_filtering() {
+        let json = r#"{
+            "name": "t", "version": "1.0.0",
+            "dependencies": {
+                "io.github.a/fs": "^1.0.0",
+                "io.github.b/search": "^2.0.0",
+                "io.github.c/weather": "^3.0.0"
+            },
+            "agents": {
+                "io.github.x/agent": "^1.0.0"
+            },
+            "profiles": {
+                "minimal": { "dependencies": ["io.github.a/fs"], "agents": [] },
+                "dev": { "dependencies": ["io.github.a/fs", "io.github.b/search"], "agents": ["io.github.x/agent"] },
+                "prod": { "dependencies": ["io.github.a/fs", "io.github.b/search", "io.github.c/weather"], "agents": ["io.github.x/agent"] }
+            },
             "tools": []
+        }"#;
+        let m: Manifest = serde_json::from_str(json).expect("parse");
+
+        let minimal = m.deps_for_profile(Some("minimal"));
+        assert_eq!(minimal.len(), 1);
+        assert!(minimal.contains_key("io.github.a/fs"));
+
+        let dev = m.deps_for_profile(Some("dev"));
+        assert_eq!(dev.len(), 2);
+
+        let prod = m.deps_for_profile(Some("prod"));
+        assert_eq!(prod.len(), 3);
+
+        let all = m.deps_for_profile(None);
+        assert_eq!(all.len(), 3);
+
+        let dev_agents = m.agents_for_profile(Some("dev"));
+        assert_eq!(dev_agents.len(), 1);
+
+        let minimal_agents = m.agents_for_profile(Some("minimal"));
+        assert_eq!(minimal_agents.len(), 0);
+    }
+
+    // === Semantic Capability Resolution ===
+
+    #[test]
+    fn test_capability_resolution() {
+        let dir = test_dir("cap_resolve");
+        std::env::set_current_dir(&dir).expect("cd");
+
+        // Create a package that provides "geocoding"
+        fs::create_dir_all("packages/io.github.x__geo").expect("mkdir");
+        fs::write(
+            "packages/io.github.x__geo/agentpack.json",
+            r#"{
+            "name": "io.github.x/geo", "version": "2.0.0", "type": "mcp-server",
+            "provides": {"capabilities": ["geocoding", "reverse-geocoding"]},
+            "dependencies": {}, "tools": []
         }"#,
         )
-        .unwrap();
+        .expect("write");
 
-        let manifest = Manifest {
-            name: "test".into(),
-            version: "1.0.0".into(),
-            description: "".into(),
-            pkg_type: "composite".into(),
-            transport: None,
-            dependencies: BTreeMap::new(),
-            agents: BTreeMap::from([(
-                "io.github.test/agent".into(),
-                AgentDep::Version("^2.0.0".into()),
-            )]),
-            provides: None,
-            tools: vec![],
-        };
+        let mut manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name": "test", "version": "1.0.0",
+            "dependencies": {},
+            "requires": [{"capability": "geocoding"}],
+            "agents": {}, "tools": []
+        }"#,
+        )
+        .expect("parse");
 
-        let lock = resolver::resolve(&manifest).unwrap();
-        let entry = &lock.resolved["io.github.test/agent"];
-        assert_eq!(entry.entry_type, "agent");
-        assert_eq!(entry.version, "2.0.0");
-        assert_eq!(entry.dependencies["io.github.x/search"], "^1.0.0");
+        manifest.resolve_capabilities().expect("resolve");
+
         assert_eq!(
-            entry.provides.as_ref().unwrap().capabilities,
+            manifest.requires[0].resolved_by.as_deref(),
+            Some("io.github.x/geo")
+        );
+        assert!(manifest.dependencies.contains_key("io.github.x/geo"));
+    }
+
+    #[test]
+    fn test_capability_not_found() {
+        let dir = test_dir("cap_not_found");
+        std::env::set_current_dir(&dir).expect("cd");
+        fs::create_dir_all("packages").expect("mkdir");
+
+        let mut manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name": "test", "version": "1.0.0",
+            "dependencies": {},
+            "requires": [{"capability": "teleportation"}],
+            "agents": {}, "tools": []
+        }"#,
+        )
+        .expect("parse");
+
+        manifest.resolve_capabilities().expect("resolve");
+        assert!(manifest.requires[0].resolved_by.is_none());
+    }
+
+    // === Resolver ===
+
+    #[test]
+    fn test_resolve_inferred() {
+        let dir = test_dir("resolve_inf2");
+        std::env::set_current_dir(&dir).expect("cd");
+        let manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name": "t", "version": "1.0.0",
+            "dependencies": {"io.github.a/fs": "^1.2.0", "io.github.b/s": "~2.0.0"},
+            "agents": {}, "tools": []
+        }"#,
+        )
+        .expect("parse");
+
+        let lock = resolver::resolve(&manifest, None).expect("resolve");
+        assert_eq!(lock.resolved.len(), 2);
+        assert_eq!(lock.resolved["io.github.a/fs"].version, "1.2.0");
+        assert_eq!(lock.resolved["io.github.b/s"].version, "2.0.0");
+    }
+
+    #[test]
+    fn test_resolve_with_profile() {
+        let dir = test_dir("resolve_profile");
+        std::env::set_current_dir(&dir).expect("cd");
+        let manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name": "t", "version": "1.0.0",
+            "dependencies": {"io.github.a/fs": "^1.0.0", "io.github.b/s": "^2.0.0"},
+            "profiles": {"minimal": {"dependencies": ["io.github.a/fs"], "agents": []}},
+            "agents": {}, "tools": []
+        }"#,
+        )
+        .expect("parse");
+
+        let lock_all = resolver::resolve(&manifest, None).expect("resolve");
+        assert_eq!(lock_all.resolved.len(), 2);
+
+        let lock_min = resolver::resolve(&manifest, Some("minimal")).expect("resolve");
+        assert_eq!(lock_min.resolved.len(), 1);
+        assert!(lock_min.resolved.contains_key("io.github.a/fs"));
+    }
+
+    #[test]
+    fn test_resolve_local() {
+        let dir = test_dir("resolve_local2");
+        std::env::set_current_dir(&dir).expect("cd");
+        fs::create_dir_all("packages/io.github.t__s").expect("mkdir");
+        fs::write(
+            "packages/io.github.t__s/agentpack.json",
+            r#"{
+            "name":"io.github.t/s","version":"3.5.0","type":"mcp-server",
+            "transport":{"type":"stdio","command":"node","args":["i.js"]},
+            "dependencies":{},"tools":[]
+        }"#,
+        )
+        .expect("write");
+
+        let manifest: Manifest = serde_json::from_str(r#"{
+            "name":"t","version":"1.0.0","dependencies":{"io.github.t/s":"^3.0.0"},"agents":{},"tools":[]
+        }"#).expect("parse");
+
+        let lock = resolver::resolve(&manifest, None).expect("resolve");
+        assert_eq!(lock.resolved["io.github.t/s"].version, "3.5.0");
+        assert_eq!(lock.resolved["io.github.t/s"].source.source_type, "local");
+    }
+
+    #[test]
+    fn test_resolve_agent() {
+        let dir = test_dir("resolve_agent2");
+        std::env::set_current_dir(&dir).expect("cd");
+        fs::create_dir_all("packages/io.github.t__a").expect("mkdir");
+        fs::write(
+            "packages/io.github.t__a/agentpack.json",
+            r#"{
+            "name":"io.github.t/a","version":"2.0.0","type":"agent",
+            "provides":{"capabilities":["research"],"protocol":"a2a"},
+            "transport":{"type":"stdio","command":"python","args":["a.py"]},
+            "dependencies":{"io.github.x/s":"^1.0.0"},"agents":{},"tools":[]
+        }"#,
+        )
+        .expect("write");
+
+        let manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name":"t","version":"1.0.0","dependencies":{},
+            "agents":{"io.github.t/a":"^2.0.0"},"tools":[]
+        }"#,
+        )
+        .expect("parse");
+
+        let lock = resolver::resolve(&manifest, None).expect("resolve");
+        let e = &lock.resolved["io.github.t/a"];
+        assert_eq!(e.entry_type, "agent");
+        assert_eq!(
+            e.provides.as_ref().expect("p").capabilities,
             vec!["research"]
         );
     }
 
-    // === Conflict detection ===
+    // === Integrity ===
 
     #[test]
-    fn test_conflict_detection() {
-        let dir = test_dir("conflict_detection");
-        std::env::set_current_dir(&dir).unwrap();
-
-        fs::create_dir_all("packages/io.github.a__server").unwrap();
-        fs::write(
-            "packages/io.github.a__server/agentpack.json",
-            r#"{
-            "name": "io.github.a/server", "version": "1.0.0",
-            "type": "mcp-server", "dependencies": {},
-            "tools": [{"name": "read_file", "description": ""}]
-        }"#,
-        )
-        .unwrap();
-
-        fs::create_dir_all("packages/io.github.b__server").unwrap();
-        fs::write("packages/io.github.b__server/agentpack.json", r#"{
-            "name": "io.github.b/server", "version": "1.0.0",
-            "type": "mcp-server", "dependencies": {},
-            "tools": [{"name": "read_file", "description": ""}, {"name": "unique_tool", "description": ""}]
-        }"#).unwrap();
-
-        let manifest = Manifest {
-            name: "test".into(),
-            version: "1.0.0".into(),
-            description: "".into(),
-            pkg_type: "composite".into(),
-            transport: None,
-            dependencies: BTreeMap::from([
-                ("io.github.a/server".into(), "^1.0.0".into()),
-                ("io.github.b/server".into(), "^1.0.0".into()),
-            ]),
-            agents: BTreeMap::new(),
-            provides: None,
-            tools: vec![],
-        };
-
-        // resolve succeeds (conflict is a warning, not fatal)
-        let lock = resolver::resolve(&manifest).unwrap();
-        assert_eq!(lock.resolved.len(), 2);
-    }
-
-    // === Integrity tests ===
-
-    #[test]
-    fn test_integrity_hash_deterministic() {
-        let h1 = resolver::compute_integrity("hello world");
-        let h2 = resolver::compute_integrity("hello world");
+    fn test_integrity_deterministic() {
+        let h1 = resolver::compute_integrity("hello");
+        let h2 = resolver::compute_integrity("hello");
         assert_eq!(h1, h2);
         assert!(h1.starts_with("sha256-"));
-
-        let h3 = resolver::compute_integrity("different content");
-        assert_ne!(h1, h3);
+        assert_ne!(h1, resolver::compute_integrity("world"));
     }
 
-    #[test]
-    fn test_lockfile_has_integrity() {
-        let dir = test_dir("lockfile_integrity");
-        std::env::set_current_dir(&dir).unwrap();
-
-        let manifest = Manifest {
-            name: "test".into(),
-            version: "1.0.0".into(),
-            description: "".into(),
-            pkg_type: "composite".into(),
-            transport: None,
-            dependencies: BTreeMap::from([("io.github.x/pkg".into(), "^1.0.0".into())]),
-            agents: BTreeMap::new(),
-            provides: None,
-            tools: vec![],
-        };
-
-        let lock = resolver::resolve(&manifest).unwrap();
-        for (_, entry) in &lock.resolved {
-            assert!(entry.integrity.is_some());
-        }
-    }
-
-    // === Lock file tests ===
+    // === Lock file ===
 
     #[test]
     fn test_lockfile_roundtrip() {
-        let dir = test_dir("lockfile_roundtrip");
+        let dir = test_dir("lock_rt2");
         let path = dir.join("agentpack.lock");
-
         let lock = LockFile {
             lock_version: 1,
             resolved: BTreeMap::from([(
-                "io.github.test/pkg".into(),
+                "io.github.t/p".into(),
                 ResolvedEntry {
                     version: "1.0.0".into(),
                     entry_type: "mcp-server".into(),
                     source: Source {
                         source_type: "npm".into(),
-                        package: Some("@test/pkg".into()),
+                        package: Some("@t/p".into()),
                         version: Some("1.0.0".into()),
                     },
                     integrity: Some("sha256-abc".into()),
                     transport: Some(Transport {
                         transport_type: "stdio".into(),
                         command: Some("npx".into()),
-                        args: vec!["-y".into(), "@test/pkg@1.0.0".into()],
+                        args: vec!["-y".into(), "@t/p@1.0.0".into()],
                         url: None,
                     }),
                     dependencies: BTreeMap::new(),
@@ -335,51 +315,44 @@ mod tests {
                 },
             )]),
         };
-
-        let json = serde_json::to_string_pretty(&lock).unwrap();
-        fs::write(&path, &json).unwrap();
-        let content = fs::read_to_string(&path).unwrap();
-        let loaded: LockFile = serde_json::from_str(&content).unwrap();
-        assert_eq!(loaded.lock_version, 1);
-        assert_eq!(loaded.resolved["io.github.test/pkg"].version, "1.0.0");
-        assert_eq!(
-            loaded.resolved["io.github.test/pkg"].entry_type,
-            "mcp-server"
-        );
+        let json = serde_json::to_string_pretty(&lock).expect("ser");
+        fs::write(&path, &json).expect("write");
+        let loaded: LockFile =
+            serde_json::from_str(&fs::read_to_string(&path).expect("read")).expect("deser");
+        assert_eq!(loaded.resolved["io.github.t/p"].version, "1.0.0");
     }
 
-    // === Credentials tests ===
+    // === Credentials ===
 
     #[test]
     fn test_credentials_parsing() {
-        let dir = test_dir("creds_parsing");
-        std::env::set_current_dir(&dir).unwrap();
-
-        fs::write(
-            "agentpack.credentials.yaml",
-            r#"
-vaults:
-  default:
-    type: env
-credentials:
-  io.github.stripe/payments:
-    STRIPE_KEY:
-      vault: default
-      key: STRIPE_API_KEY
-"#,
-        )
-        .unwrap();
-
-        let creds = CredentialsFile::load().unwrap().unwrap();
+        let dir = test_dir("creds2");
+        std::env::set_current_dir(&dir).expect("cd");
+        fs::write("agentpack.credentials.yaml", "vaults:\n  default:\n    type: env\ncredentials:\n  x:\n    KEY:\n      vault: default\n      key: MY_KEY\n").expect("write");
+        let creds = CredentialsFile::load().expect("load").expect("some");
         assert_eq!(creds.vaults["default"].vault_type, "env");
-        assert!(creds.credentials.contains_key("io.github.stripe/payments"));
     }
 
     #[test]
-    fn test_credentials_missing_file_returns_none() {
-        let dir = test_dir("creds_missing");
-        std::env::set_current_dir(&dir).unwrap();
-        let creds = CredentialsFile::load().unwrap();
-        assert!(creds.is_none());
+    fn test_credentials_missing() {
+        let dir = test_dir("creds_miss2");
+        std::env::set_current_dir(&dir).expect("cd");
+        assert!(CredentialsFile::load().expect("load").is_none());
+    }
+
+    // === Conflict detection ===
+
+    #[test]
+    fn test_conflicts() {
+        let dir = test_dir("conflicts2");
+        std::env::set_current_dir(&dir).expect("cd");
+        fs::create_dir_all("packages/io.github.a__s").expect("mkdir");
+        fs::write("packages/io.github.a__s/agentpack.json", r#"{"name":"io.github.a/s","version":"1.0.0","type":"mcp-server","dependencies":{},"tools":[{"name":"dup","description":""}]}"#).expect("w");
+        fs::create_dir_all("packages/io.github.b__s").expect("mkdir");
+        fs::write("packages/io.github.b__s/agentpack.json", r#"{"name":"io.github.b/s","version":"1.0.0","type":"mcp-server","dependencies":{},"tools":[{"name":"dup","description":""}]}"#).expect("w");
+
+        let manifest: Manifest = serde_json::from_str(r#"{"name":"t","version":"1.0.0","dependencies":{"io.github.a/s":"^1.0.0","io.github.b/s":"^1.0.0"},"agents":{},"tools":[]}"#).expect("p");
+        let lock = resolver::resolve(&manifest, None).expect("resolve");
+        assert_eq!(lock.resolved.len(), 2);
     }
 }

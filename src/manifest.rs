@@ -20,6 +20,10 @@ pub struct Manifest {
     #[serde(default)]
     pub provides: Option<Provides>,
     #[serde(default)]
+    pub requires: Vec<CapabilityRequirement>,
+    #[serde(default)]
+    pub profiles: BTreeMap<String, Profile>,
+    #[serde(default)]
     pub tools: Vec<Tool>,
 }
 
@@ -27,12 +31,31 @@ fn default_type() -> String {
     "composite".into()
 }
 
+/// Semantic capability requirement — resolve by what you need, not by name
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CapabilityRequirement {
+    pub capability: String,
+    #[serde(default)]
+    pub protocol: Option<String>,
+    #[serde(default)]
+    pub resolved_by: Option<String>,
+}
+
+/// Workspace profile — subset of dependencies for different contexts
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Profile {
+    #[serde(default)]
+    pub dependencies: Vec<String>,
+    #[serde(default)]
+    pub agents: Vec<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AgentDep {
-    /// Simple: just a version string
     Version(String),
-    /// Full: version + metadata
     Full {
         version: String,
         #[serde(default)]
@@ -171,6 +194,81 @@ impl Manifest {
     pub fn exists() -> bool {
         Path::new(MANIFEST_FILE).exists()
     }
+
+    /// Get dependencies filtered by profile (None = all)
+    pub fn deps_for_profile(&self, profile: Option<&str>) -> BTreeMap<String, String> {
+        match profile {
+            None => self.dependencies.clone(),
+            Some(p) => {
+                if let Some(prof) = self.profiles.get(p) {
+                    self.dependencies
+                        .iter()
+                        .filter(|(k, _)| prof.dependencies.contains(k))
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect()
+                } else {
+                    self.dependencies.clone()
+                }
+            }
+        }
+    }
+
+    /// Get agents filtered by profile
+    pub fn agents_for_profile(&self, profile: Option<&str>) -> BTreeMap<String, AgentDep> {
+        match profile {
+            None => self.agents.clone(),
+            Some(p) => {
+                if let Some(prof) = self.profiles.get(p) {
+                    self.agents
+                        .iter()
+                        .filter(|(k, _)| prof.agents.contains(k))
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect()
+                } else {
+                    self.agents.clone()
+                }
+            }
+        }
+    }
+
+    /// Resolve semantic capability requirements against available packages
+    pub fn resolve_capabilities(&mut self) -> Result<()> {
+        for req in &mut self.requires {
+            if req.resolved_by.is_some() {
+                continue;
+            }
+            // Search local packages for one that provides this capability
+            let packages_dir = Path::new("packages");
+            if !packages_dir.exists() {
+                continue;
+            }
+            for entry in std::fs::read_dir(packages_dir)? {
+                let entry = entry?;
+                let manifest_path = entry.path().join("agentpack.json");
+                if !manifest_path.exists() {
+                    continue;
+                }
+                let content = std::fs::read_to_string(&manifest_path)?;
+                if let Ok(m) = serde_json::from_str::<Manifest>(&content) {
+                    let provides_cap = m
+                        .provides
+                        .as_ref()
+                        .map(|p| p.capabilities.contains(&req.capability))
+                        .unwrap_or(false);
+                    if provides_cap {
+                        req.resolved_by = Some(m.name.clone());
+                        // Add to dependencies if not already present
+                        if !self.dependencies.contains_key(&m.name) {
+                            self.dependencies
+                                .insert(m.name.clone(), format!("^{}", m.version));
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 impl LockFile {
@@ -184,6 +282,31 @@ impl LockFile {
         let json = serde_json::to_string_pretty(self)?;
         std::fs::write(LOCK_FILE, json)?;
         Ok(())
+    }
+
+    /// Filter lock file to only include entries from a profile
+    pub fn filter_by_profile(&self, manifest: &Manifest, profile: &str) -> Self {
+        let deps = manifest.deps_for_profile(Some(profile));
+        let agents = manifest.agents_for_profile(Some(profile));
+        let allowed: std::collections::HashSet<&String> =
+            deps.keys().chain(agents.keys()).collect();
+
+        LockFile {
+            lock_version: self.lock_version,
+            resolved: self
+                .resolved
+                .iter()
+                .filter(|(k, _)| allowed.contains(k))
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+        }
+    }
+}
+
+impl Clone for ResolvedEntry {
+    fn clone(&self) -> Self {
+        let json = serde_json::to_string(self).expect("serialize");
+        serde_json::from_str(&json).expect("deserialize")
     }
 }
 

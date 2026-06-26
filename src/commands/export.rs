@@ -1,34 +1,68 @@
-use crate::manifest::LockFile;
 use anyhow::{bail, Result};
 use serde_json::{json, Map, Value};
 
-pub fn run(target: &str) -> Result<()> {
+use crate::manifest::{LockFile, Manifest};
+
+pub fn run(target: &str, profile: Option<&str>) -> Result<()> {
     let lock = LockFile::load()?;
 
+    let filtered = match profile {
+        Some(p) => {
+            let manifest = Manifest::load()?;
+            if !manifest.profiles.contains_key(p) {
+                bail!(
+                    "Profile '{}' not found. Available: {}",
+                    p,
+                    manifest
+                        .profiles
+                        .keys()
+                        .cloned()
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                );
+            }
+            lock.filter_by_profile(&manifest, p)
+        }
+        None => lock,
+    };
+
     match target {
-        "claude-desktop" => export_file(&lock, "mcpServers", "claude_desktop_config.json"),
-        "vscode" | "copilot" => export_nested(&lock, "mcp", "servers", ".vscode/mcp.json"),
-        "kiro" => export_nested(&lock, "mcp", "servers", ".kiro/mcp.json"),
-        "cursor" => export_file(&lock, "mcpServers", ".cursor/mcp.json"),
+        "claude-desktop" => export_file(&filtered, "mcpServers", "claude_desktop_config.json"),
+        "vscode" | "copilot" => export_nested(&filtered, "mcp", "servers", ".vscode/mcp.json"),
+        "kiro" => export_nested(&filtered, "mcp", "servers", ".kiro/mcp.json"),
+        "cursor" => export_file(&filtered, "mcpServers", ".cursor/mcp.json"),
+        "gateway" => export_gateway(&filtered),
         _ => bail!(
-            "Unknown target '{}'. Supported: claude-desktop, vscode, kiro, cursor",
+            "Unknown target '{}'. Supported: claude-desktop, vscode, kiro, cursor, gateway",
             target
         ),
     }
 }
 
-/// Format: { "<wrapper_key>": { "server-name": { ... } } }
 fn export_file(lock: &LockFile, wrapper_key: &str, out_path: &str) -> Result<()> {
     let servers = build_servers(lock);
     let config = json!({ wrapper_key: servers });
     write_output(&config, out_path)
 }
 
-/// Format: { "<outer>": { "<inner>": { "server-name": { ... } } } }
 fn export_nested(lock: &LockFile, outer: &str, inner: &str, out_path: &str) -> Result<()> {
     let servers = build_servers(lock);
     let config = json!({ outer: { inner: servers } });
     write_output(&config, out_path)
+}
+
+fn export_gateway(_lock: &LockFile) -> Result<()> {
+    // For gateway mode, export a config that points to agentpack-gateway as the single server
+    let config = json!({
+        "mcpServers": {
+            "agentpack": {
+                "command": "node",
+                "args": ["node_modules/@agentpack/gateway/index.js", "--lock", "./agentpack.lock"],
+                "type": "stdio"
+            }
+        }
+    });
+    write_output(&config, "agentpack-gateway.json")
 }
 
 fn build_servers(lock: &LockFile) -> Map<String, Value> {

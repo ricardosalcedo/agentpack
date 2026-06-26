@@ -5,17 +5,18 @@ use std::path::Path;
 
 use crate::manifest::{AgentDep, LockFile, Manifest, ResolvedEntry, Source, Transport};
 
-pub fn resolve(manifest: &Manifest) -> Result<LockFile> {
+pub fn resolve(manifest: &Manifest, profile: Option<&str>) -> Result<LockFile> {
     let mut resolved = BTreeMap::new();
 
-    // Resolve MCP server dependencies
-    for (name, version_req) in &manifest.dependencies {
+    let deps = manifest.deps_for_profile(profile);
+    let agents = manifest.agents_for_profile(profile);
+
+    for (name, version_req) in &deps {
         let entry = resolve_mcp(name, version_req)?;
         resolved.insert(name.clone(), entry);
     }
 
-    // Resolve agent dependencies
-    for (name, agent_dep) in &manifest.agents {
+    for (name, agent_dep) in &agents {
         let entry = resolve_agent(name, agent_dep)?;
         resolved.insert(name.clone(), entry);
     }
@@ -66,12 +67,10 @@ fn resolve_mcp(name: &str, version_req: &str) -> Result<ResolvedEntry> {
 }
 
 fn resolve_agent(name: &str, dep: &AgentDep) -> Result<ResolvedEntry> {
-    // Check local package first
     let local_path = format!("packages/{}/agentpack.json", name.replace('/', "__"));
     if Path::new(&local_path).exists() {
         let content = std::fs::read_to_string(&local_path)?;
         let m: Manifest = serde_json::from_str(&content)?;
-        // Collect agent's own agent deps as version strings
         let agent_deps: BTreeMap<String, String> = m
             .agents
             .iter()
@@ -93,7 +92,6 @@ fn resolve_agent(name: &str, dep: &AgentDep) -> Result<ResolvedEntry> {
         });
     }
 
-    // If source is specified (git URL), note it
     let source_url = dep.source().unwrap_or("registry");
     let resolved_version = resolve_version(dep.version());
     let integrity = compute_integrity(&format!("{}@{}", name, resolved_version));

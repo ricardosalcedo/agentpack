@@ -28,19 +28,26 @@ enum Commands {
     Add {
         /// Package (e.g. io.github.anthropic/filesystem@^1.2.0)
         package: String,
-        /// Add as agent dependency instead of MCP
+        /// Add as agent dependency
         #[arg(long)]
         agent: bool,
     },
     /// Resolve dependencies and generate lock file
-    Install,
+    Install {
+        /// Only resolve deps in this profile
+        #[arg(long)]
+        profile: Option<String>,
+    },
     /// Display the dependency graph
     Graph,
     /// Export config for a target client
     Export {
-        /// Target: claude-desktop, vscode
+        /// Target: claude-desktop, vscode, kiro, cursor, gateway
         #[arg(long)]
         target: String,
+        /// Export only deps in this profile
+        #[arg(long)]
+        profile: Option<String>,
     },
     /// Start all dependency servers/agents in order
     Run,
@@ -63,9 +70,9 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Init => commands::init::run(),
         Commands::Add { package, agent } => commands::add::run(&package, agent),
-        Commands::Install => commands::install::run(),
+        Commands::Install { profile } => commands::install::run(profile.as_deref()),
         Commands::Graph => commands::graph::run(),
-        Commands::Export { target } => commands::export::run(&target),
+        Commands::Export { target, profile } => commands::export::run(&target, profile.as_deref()),
         Commands::Run => commands::run::run(),
         Commands::Audit => commands::audit::run(),
         Commands::Fetch { name, source } => commands::fetch::run(&name, &source),

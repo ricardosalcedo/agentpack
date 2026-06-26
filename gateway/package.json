@@ -1,0 +1,12 @@
+{
+  "name": "@agentpack/gateway",
+  "version": "0.1.0",
+  "description": "AgentPack MCP Gateway — connect one server, get all your dependency-managed tools",
+  "type": "module",
+  "main": "index.js",
+  "bin": { "agentpack-gateway": "./index.js" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.0"
+  }
+}

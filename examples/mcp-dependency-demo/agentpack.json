@@ -1,13 +1,53 @@
 {
   "name": "io.github.ricardosalcedo/travel-system",
   "version": "1.0.0",
-  "description": "Multi-server travel planning system demonstrating MCP dependencies",
+  "description": "Travel planning system with profiles and semantic resolution",
   "type": "composite",
+  "transport": null,
   "dependencies": {
     "io.github.agentpack-demo/geocoding": "^1.0.0",
-    "io.github.agentpack-demo/weather": "^1.0.0",
-    "io.github.agentpack-demo/travel-advisor": "^1.0.0"
+    "io.github.agentpack-demo/travel-advisor": "^1.0.0",
+    "io.github.agentpack-demo/weather": "^1.0.0"
   },
   "agents": {},
+  "provides": null,
+  "requires": [
+    {
+      "capability": "geocoding",
+      "protocol": null,
+      "resolved_by": "io.github.agentpack-demo/geocoding"
+    },
+    {
+      "capability": "weather-data",
+      "protocol": null,
+      "resolved_by": "io.github.agentpack-demo/weather"
+    }
+  ],
+  "profiles": {
+    "dev": {
+      "dependencies": [
+        "io.github.agentpack-demo/geocoding",
+        "io.github.agentpack-demo/weather"
+      ],
+      "agents": [],
+      "description": "Geocoding + weather for development"
+    },
+    "minimal": {
+      "dependencies": [
+        "io.github.agentpack-demo/geocoding"
+      ],
+      "agents": [],
+      "description": "Just geocoding for basic lookups"
+    },
+    "prod": {
+      "dependencies": [
+        "io.github.agentpack-demo/geocoding",
+        "io.github.agentpack-demo/weather",
+        "io.github.agentpack-demo/travel-advisor"
+      ],
+      "agents": [],
+      "description": "Full stack"
+    }
+  },
   "tools": []
 }
