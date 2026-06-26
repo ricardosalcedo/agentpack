@@ -1,0 +1,13 @@
+{
+  "name": "io.github.ricardosalcedo/travel-system",
+  "version": "1.0.0",
+  "description": "Multi-server travel planning system demonstrating MCP dependencies",
+  "type": "composite",
+  "dependencies": {
+    "io.github.agentpack-demo/geocoding": "^1.0.0",
+    "io.github.agentpack-demo/weather": "^1.0.0",
+    "io.github.agentpack-demo/travel-advisor": "^1.0.0"
+  },
+  "agents": {},
+  "tools": []
+}

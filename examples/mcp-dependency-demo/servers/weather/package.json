@@ -1,0 +1,10 @@
+{
+  "name": "@agentpack-demo/weather-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^4.4.3"
+  }
+}

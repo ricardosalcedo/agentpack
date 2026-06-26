@@ -1,0 +1,16 @@
+{
+  "name": "io.github.agentpack-demo/geocoding",
+  "version": "1.0.0",
+  "description": "MCP server that converts addresses to coordinates",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "node",
+    "args": ["servers/geocoding/index.js"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "geocode", "description": "Convert address/city to lat/lng"},
+    {"name": "reverse_geocode", "description": "Convert lat/lng to place name"}
+  ]
+}

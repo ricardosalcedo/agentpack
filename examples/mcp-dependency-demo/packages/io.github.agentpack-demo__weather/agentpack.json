@@ -1,0 +1,18 @@
+{
+  "name": "io.github.agentpack-demo/weather",
+  "version": "1.0.0",
+  "description": "MCP server for weather data (depends on geocoding for location resolution)",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "node",
+    "args": ["servers/weather/index.js"]
+  },
+  "dependencies": {
+    "io.github.agentpack-demo/geocoding": "^1.0.0"
+  },
+  "tools": [
+    {"name": "get_weather", "description": "Get current weather for coordinates"},
+    {"name": "get_forecast", "description": "Get 3-day forecast for coordinates"}
+  ]
+}

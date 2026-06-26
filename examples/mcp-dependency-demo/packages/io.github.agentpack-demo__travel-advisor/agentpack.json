@@ -1,0 +1,19 @@
+{
+  "name": "io.github.agentpack-demo/travel-advisor",
+  "version": "1.0.0",
+  "description": "MCP server for travel recommendations (depends on geocoding + weather)",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "node",
+    "args": ["servers/travel-advisor/index.js"]
+  },
+  "dependencies": {
+    "io.github.agentpack-demo/geocoding": "^1.0.0",
+    "io.github.agentpack-demo/weather": "^1.0.0"
+  },
+  "tools": [
+    {"name": "recommend_destination", "description": "Recommend travel destination"},
+    {"name": "plan_trip", "description": "Create trip plan (needs geocoding + weather)"}
+  ]
+}
