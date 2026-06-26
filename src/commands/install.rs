@@ -1,6 +1,6 @@
-use anyhow::Result;
 use crate::manifest::Manifest;
 use crate::resolver;
+use anyhow::Result;
 
 pub fn run() -> Result<()> {
     let manifest = Manifest::load()?;
@@ -14,6 +14,9 @@ pub fn run() -> Result<()> {
     let lock = resolver::resolve(&manifest)?;
 
     lock.save()?;
-    println!("Written agentpack.lock ({} packages resolved)", lock.resolved.len());
+    println!(
+        "Written agentpack.lock ({} packages resolved)",
+        lock.resolved.len()
+    );
     Ok(())
 }

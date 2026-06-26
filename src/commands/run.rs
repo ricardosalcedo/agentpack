@@ -1,8 +1,8 @@
 use anyhow::{bail, Result};
 use std::collections::BTreeMap;
 use std::process::{Child, Command};
-use std::time::Duration;
 use std::thread;
+use std::time::Duration;
 
 use crate::manifest::{CredentialsFile, LockFile};
 
@@ -25,26 +25,39 @@ pub fn run() -> Result<()> {
         let transport = match &entry.transport {
             Some(t) => t,
             None => {
-                println!("  ⏭ {} [{}] — no transport, skipping", name, entry.entry_type);
+                println!(
+                    "  ⏭ {} [{}] — no transport, skipping",
+                    name, entry.entry_type
+                );
                 continue;
             }
         };
 
         if transport.transport_type != "stdio" {
-            println!("  ⏭ {} [{}] — remote ({})", name, entry.entry_type, transport.transport_type);
+            println!(
+                "  ⏭ {} [{}] — remote ({})",
+                name, entry.entry_type, transport.transport_type
+            );
             continue;
         }
 
         let cmd = match &transport.command {
             Some(c) => c.clone(),
-            None => { continue; }
+            None => {
+                continue;
+            }
         };
 
-        let env_vars = creds.as_ref()
+        let env_vars = creds
+            .as_ref()
             .map(|c| c.resolve_env(name))
             .unwrap_or_default();
 
-        let icon = if entry.entry_type == "agent" { "🤖" } else { "⚙" };
+        let icon = if entry.entry_type == "agent" {
+            "🤖"
+        } else {
+            "⚙"
+        };
         println!("  {} ▶ {} @ {}", icon, name, entry.version);
 
         let mut command = Command::new(&cmd);
@@ -57,8 +70,12 @@ pub fn run() -> Result<()> {
         command.stderr(std::process::Stdio::piped());
 
         match command.spawn() {
-            Ok(child) => { children.insert(name.clone(), child); }
-            Err(e) => { eprintln!("  ✗ Failed to start {}: {}", name, e); }
+            Ok(child) => {
+                children.insert(name.clone(), child);
+            }
+            Err(e) => {
+                eprintln!("  ✗ Failed to start {}: {}", name, e);
+            }
         }
 
         thread::sleep(Duration::from_millis(100));
@@ -69,7 +86,10 @@ pub fn run() -> Result<()> {
         return Ok(());
     }
 
-    println!("\n✓ {} services running. Press Ctrl+C to stop all.\n", children.len());
+    println!(
+        "\n✓ {} services running. Press Ctrl+C to stop all.\n",
+        children.len()
+    );
 
     loop {
         thread::sleep(Duration::from_secs(2));
@@ -81,10 +101,14 @@ pub fn run() -> Result<()> {
                     dead.push(name.clone());
                 }
                 Ok(None) => {}
-                Err(_) => { dead.push(name.clone()); }
+                Err(_) => {
+                    dead.push(name.clone());
+                }
             }
         }
-        for name in dead { children.remove(&name); }
+        for name in dead {
+            children.remove(&name);
+        }
         if children.is_empty() {
             println!("All services have exited.");
             break;
@@ -106,11 +130,15 @@ fn topo_sort(lock: &LockFile) -> Result<Vec<String>> {
 }
 
 fn topo_visit(
-    name: &str, lock: &LockFile,
-    visited: &mut BTreeMap<String, bool>, order: &mut Vec<String>,
+    name: &str,
+    lock: &LockFile,
+    visited: &mut BTreeMap<String, bool>,
+    order: &mut Vec<String>,
 ) -> Result<()> {
     if let Some(&in_progress) = visited.get(name) {
-        if in_progress { bail!("Circular dependency involving '{}'", name); }
+        if in_progress {
+            bail!("Circular dependency involving '{}'", name);
+        }
         return Ok(());
     }
     visited.insert(name.to_string(), true);

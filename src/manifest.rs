@@ -1,7 +1,7 @@
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::Path;
-use anyhow::{Context, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Manifest {
@@ -23,7 +23,9 @@ pub struct Manifest {
     pub tools: Vec<Tool>,
 }
 
-fn default_type() -> String { "composite".into() }
+fn default_type() -> String {
+    "composite".into()
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -145,7 +147,9 @@ pub struct CredentialRef {
     pub key: String,
 }
 
-fn default_vault() -> String { "default".into() }
+fn default_vault() -> String {
+    "default".into()
+}
 
 const MANIFEST_FILE: &str = "agentpack.json";
 const LOCK_FILE: &str = "agentpack.lock";
@@ -190,8 +194,8 @@ impl CredentialsFile {
         }
         let content = std::fs::read_to_string(CREDENTIALS_FILE)
             .context("Failed to read agentpack.credentials.yaml")?;
-        let creds: Self = serde_yaml::from_str(&content)
-            .context("Invalid agentpack.credentials.yaml")?;
+        let creds: Self =
+            serde_yaml::from_str(&content).context("Invalid agentpack.credentials.yaml")?;
         Ok(Some(creds))
     }
 

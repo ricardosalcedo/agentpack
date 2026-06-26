@@ -1,7 +1,7 @@
-mod manifest;
 mod commands;
-mod resolver;
+mod manifest;
 mod registry;
+mod resolver;
 
 #[cfg(test)]
 mod tests;
@@ -10,7 +10,11 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "agentpack", version, about = "Dependency manager for MCP servers and AI agents")]
+#[command(
+    name = "agentpack",
+    version,
+    about = "Dependency manager for MCP servers and AI agents"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,

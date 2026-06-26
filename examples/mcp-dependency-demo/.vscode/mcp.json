@@ -1,0 +1,27 @@
+{
+  "mcp": {
+    "servers": {
+      "geocoding": {
+        "args": [
+          "servers/geocoding/index.js"
+        ],
+        "command": "node",
+        "type": "stdio"
+      },
+      "travel-advisor": {
+        "args": [
+          "servers/travel-advisor/index.js"
+        ],
+        "command": "node",
+        "type": "stdio"
+      },
+      "weather": {
+        "args": [
+          "servers/weather/index.js"
+        ],
+        "command": "node",
+        "type": "stdio"
+      }
+    }
+  }
+}

@@ -28,9 +28,15 @@ mod tests {
             pkg_type: "composite".into(),
             transport: None,
             dependencies: BTreeMap::from([("io.github.a/server".into(), "^1.0.0".into())]),
-            agents: BTreeMap::from([("io.github.a/agent".into(), AgentDep::Version("^2.0.0".into()))]),
+            agents: BTreeMap::from([(
+                "io.github.a/agent".into(),
+                AgentDep::Version("^2.0.0".into()),
+            )]),
             provides: None,
-            tools: vec![Tool { name: "test_tool".into(), description: "A tool".into() }],
+            tools: vec![Tool {
+                name: "test_tool".into(),
+                description: "A tool".into(),
+            }],
         };
 
         let json = serde_json::to_string_pretty(&manifest).unwrap();
@@ -117,8 +123,14 @@ mod tests {
 
         let lock = resolver::resolve(&manifest).unwrap();
         assert_eq!(lock.resolved.len(), 2);
-        assert_eq!(lock.resolved["io.github.anthropic/filesystem"].version, "1.2.0");
-        assert_eq!(lock.resolved["io.github.anthropic/filesystem"].entry_type, "mcp-server");
+        assert_eq!(
+            lock.resolved["io.github.anthropic/filesystem"].version,
+            "1.2.0"
+        );
+        assert_eq!(
+            lock.resolved["io.github.anthropic/filesystem"].entry_type,
+            "mcp-server"
+        );
         assert_eq!(lock.resolved["io.github.stripe/payments"].version, "2.0.0");
     }
 
@@ -128,14 +140,18 @@ mod tests {
         std::env::set_current_dir(&dir).unwrap();
 
         fs::create_dir_all("packages/io.github.test__server").unwrap();
-        fs::write("packages/io.github.test__server/agentpack.json", r#"{
+        fs::write(
+            "packages/io.github.test__server/agentpack.json",
+            r#"{
             "name": "io.github.test/server",
             "version": "3.5.0",
             "type": "mcp-server",
             "transport": {"type": "stdio", "command": "node", "args": ["index.js"]},
             "dependencies": {},
             "tools": [{"name": "do_thing", "description": "does a thing"}]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let manifest = Manifest {
             name: "test".into(),
@@ -153,7 +169,10 @@ mod tests {
         let entry = &lock.resolved["io.github.test/server"];
         assert_eq!(entry.version, "3.5.0");
         assert_eq!(entry.source.source_type, "local");
-        assert_eq!(entry.transport.as_ref().unwrap().command.as_deref(), Some("node"));
+        assert_eq!(
+            entry.transport.as_ref().unwrap().command.as_deref(),
+            Some("node")
+        );
     }
 
     #[test]
@@ -162,7 +181,9 @@ mod tests {
         std::env::set_current_dir(&dir).unwrap();
 
         fs::create_dir_all("packages/io.github.test__agent").unwrap();
-        fs::write("packages/io.github.test__agent/agentpack.json", r#"{
+        fs::write(
+            "packages/io.github.test__agent/agentpack.json",
+            r#"{
             "name": "io.github.test/agent",
             "version": "2.0.0",
             "type": "agent",
@@ -171,7 +192,9 @@ mod tests {
             "dependencies": {"io.github.x/search": "^1.0.0"},
             "agents": {},
             "tools": []
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         let manifest = Manifest {
             name: "test".into(),
@@ -180,7 +203,10 @@ mod tests {
             pkg_type: "composite".into(),
             transport: None,
             dependencies: BTreeMap::new(),
-            agents: BTreeMap::from([("io.github.test/agent".into(), AgentDep::Version("^2.0.0".into()))]),
+            agents: BTreeMap::from([(
+                "io.github.test/agent".into(),
+                AgentDep::Version("^2.0.0".into()),
+            )]),
             provides: None,
             tools: vec![],
         };
@@ -190,7 +216,10 @@ mod tests {
         assert_eq!(entry.entry_type, "agent");
         assert_eq!(entry.version, "2.0.0");
         assert_eq!(entry.dependencies["io.github.x/search"], "^1.0.0");
-        assert_eq!(entry.provides.as_ref().unwrap().capabilities, vec!["research"]);
+        assert_eq!(
+            entry.provides.as_ref().unwrap().capabilities,
+            vec!["research"]
+        );
     }
 
     // === Conflict detection ===
@@ -201,11 +230,15 @@ mod tests {
         std::env::set_current_dir(&dir).unwrap();
 
         fs::create_dir_all("packages/io.github.a__server").unwrap();
-        fs::write("packages/io.github.a__server/agentpack.json", r#"{
+        fs::write(
+            "packages/io.github.a__server/agentpack.json",
+            r#"{
             "name": "io.github.a/server", "version": "1.0.0",
             "type": "mcp-server", "dependencies": {},
             "tools": [{"name": "read_file", "description": ""}]
-        }"#).unwrap();
+        }"#,
+        )
+        .unwrap();
 
         fs::create_dir_all("packages/io.github.b__server").unwrap();
         fs::write("packages/io.github.b__server/agentpack.json", r#"{
@@ -284,9 +317,18 @@ mod tests {
                 ResolvedEntry {
                     version: "1.0.0".into(),
                     entry_type: "mcp-server".into(),
-                    source: Source { source_type: "npm".into(), package: Some("@test/pkg".into()), version: Some("1.0.0".into()) },
+                    source: Source {
+                        source_type: "npm".into(),
+                        package: Some("@test/pkg".into()),
+                        version: Some("1.0.0".into()),
+                    },
                     integrity: Some("sha256-abc".into()),
-                    transport: Some(Transport { transport_type: "stdio".into(), command: Some("npx".into()), args: vec!["-y".into(), "@test/pkg@1.0.0".into()], url: None }),
+                    transport: Some(Transport {
+                        transport_type: "stdio".into(),
+                        command: Some("npx".into()),
+                        args: vec!["-y".into(), "@test/pkg@1.0.0".into()],
+                        url: None,
+                    }),
                     dependencies: BTreeMap::new(),
                     agents: BTreeMap::new(),
                     provides: None,
@@ -300,7 +342,10 @@ mod tests {
         let loaded: LockFile = serde_json::from_str(&content).unwrap();
         assert_eq!(loaded.lock_version, 1);
         assert_eq!(loaded.resolved["io.github.test/pkg"].version, "1.0.0");
-        assert_eq!(loaded.resolved["io.github.test/pkg"].entry_type, "mcp-server");
+        assert_eq!(
+            loaded.resolved["io.github.test/pkg"].entry_type,
+            "mcp-server"
+        );
     }
 
     // === Credentials tests ===
@@ -310,7 +355,9 @@ mod tests {
         let dir = test_dir("creds_parsing");
         std::env::set_current_dir(&dir).unwrap();
 
-        fs::write("agentpack.credentials.yaml", r#"
+        fs::write(
+            "agentpack.credentials.yaml",
+            r#"
 vaults:
   default:
     type: env
@@ -319,7 +366,9 @@ credentials:
     STRIPE_KEY:
       vault: default
       key: STRIPE_API_KEY
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let creds = CredentialsFile::load().unwrap().unwrap();
         assert_eq!(creds.vaults["default"].vault_type, "env");

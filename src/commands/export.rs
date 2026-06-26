@@ -1,6 +1,6 @@
+use crate::manifest::LockFile;
 use anyhow::{bail, Result};
 use serde_json::{json, Map, Value};
-use crate::manifest::LockFile;
 
 pub fn run(target: &str) -> Result<()> {
     let lock = LockFile::load()?;
@@ -10,7 +10,10 @@ pub fn run(target: &str) -> Result<()> {
         "vscode" | "copilot" => export_nested(&lock, "mcp", "servers", ".vscode/mcp.json"),
         "kiro" => export_nested(&lock, "mcp", "servers", ".kiro/mcp.json"),
         "cursor" => export_file(&lock, "mcpServers", ".cursor/mcp.json"),
-        _ => bail!("Unknown target '{}'. Supported: claude-desktop, vscode, kiro, cursor", target),
+        _ => bail!(
+            "Unknown target '{}'. Supported: claude-desktop, vscode, kiro, cursor",
+            target
+        ),
     }
 }
 

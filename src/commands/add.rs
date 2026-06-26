@@ -1,5 +1,5 @@
-use anyhow::{bail, Result};
 use crate::manifest::{AgentDep, Manifest};
+use anyhow::{bail, Result};
 
 pub fn run(package: &str, is_agent: bool) -> Result<()> {
     let mut manifest = Manifest::load()?;
@@ -18,7 +18,9 @@ pub fn run(package: &str, is_agent: bool) -> Result<()> {
         if manifest.agents.contains_key(&name) {
             bail!("'{}' is already an agent dependency.", name);
         }
-        manifest.agents.insert(name.clone(), AgentDep::Version(version.clone()));
+        manifest
+            .agents
+            .insert(name.clone(), AgentDep::Version(version.clone()));
         manifest.save()?;
         println!("Added agent: {} @ {}", name, version);
     } else {

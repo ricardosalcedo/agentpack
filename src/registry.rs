@@ -37,7 +37,10 @@ fn resolve_url(source: &str) -> Result<String> {
             owner, repo, path
         ));
     }
-    anyhow::bail!("Unknown source format: '{}'. Use https:// or github:owner/repo", source)
+    anyhow::bail!(
+        "Unknown source format: '{}'. Use https:// or github:owner/repo",
+        source
+    )
 }
 
 /// Minimal HTTP GET using curl (avoids adding reqwest as a dependency)
@@ -52,8 +55,7 @@ fn http_get(url: &str) -> Result<String> {
         anyhow::bail!("HTTP request failed for {}: {}", url, stderr.trim());
     }
 
-    String::from_utf8(output.stdout)
-        .context("Response was not valid UTF-8")
+    String::from_utf8(output.stdout).context("Response was not valid UTF-8")
 }
 
 /// Fetch and save a remote manifest to the local packages/ directory

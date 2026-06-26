@@ -12,7 +12,10 @@ pub fn run() -> Result<()> {
     // 1. Check for unpinned versions
     for (name, ver) in &manifest.dependencies {
         if ver == "*" || ver == "latest" {
-            issues.push(format!("[CRITICAL] Unpinned version for '{}': '{}'", name, ver));
+            issues.push(format!(
+                "[CRITICAL] Unpinned version for '{}': '{}'",
+                name, ver
+            ));
         }
     }
 
@@ -48,13 +51,16 @@ pub fn run() -> Result<()> {
 
         // 4. Check for tool name conflicts
         let mut tool_owners: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for (name, _entry) in &lock.resolved {
+        for name in lock.resolved.keys() {
             let local_path = format!("packages/{}/agentpack.json", name.replace('/', "__"));
             if Path::new(&local_path).exists() {
                 if let Ok(content) = std::fs::read_to_string(&local_path) {
                     if let Ok(m) = serde_json::from_str::<Manifest>(&content) {
                         for tool in &m.tools {
-                            tool_owners.entry(tool.name.clone()).or_default().push(name.clone());
+                            tool_owners
+                                .entry(tool.name.clone())
+                                .or_default()
+                                .push(name.clone());
                         }
                     }
                 }
@@ -64,7 +70,8 @@ pub fn run() -> Result<()> {
             if owners.len() > 1 {
                 issues.push(format!(
                     "[WARN] Tool name conflict: '{}' provided by: {}",
-                    tool, owners.join(", ")
+                    tool,
+                    owners.join(", ")
                 ));
             }
         }
@@ -76,7 +83,8 @@ pub fn run() -> Result<()> {
                     let has_version = t.args.iter().any(|a| a.contains('@'));
                     if !has_version {
                         issues.push(format!(
-                            "[HIGH] Unpinned npx in '{}': no version in args", name
+                            "[HIGH] Unpinned npx in '{}': no version in args",
+                            name
                         ));
                     }
                 }
@@ -91,7 +99,10 @@ pub fn run() -> Result<()> {
 
     // Report
     if issues.is_empty() {
-        println!("✓ No issues found. {} dependencies audited.", manifest.dependencies.len());
+        println!(
+            "✓ No issues found. {} dependencies audited.",
+            manifest.dependencies.len()
+        );
     } else {
         println!("Audit results ({} issues):\n", issues.len());
         for issue in &issues {
@@ -101,8 +112,10 @@ pub fn run() -> Result<()> {
         let critical = issues.iter().filter(|i| i.contains("[CRITICAL]")).count();
         let high = issues.iter().filter(|i| i.contains("[HIGH]")).count();
         let warn = issues.iter().filter(|i| i.contains("[WARN]")).count();
-        println!("Summary: {} critical, {} high, {} warnings",
-            critical, high, warn);
+        println!(
+            "Summary: {} critical, {} high, {} warnings",
+            critical, high, warn
+        );
     }
 
     Ok(())

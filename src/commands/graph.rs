@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::manifest::LockFile;
+use anyhow::Result;
 
 pub fn run() -> Result<()> {
     let lock = LockFile::load()?;
@@ -12,8 +12,16 @@ pub fn run() -> Result<()> {
     println!("Dependency graph:\n");
 
     // Group by type
-    let mcps: Vec<_> = lock.resolved.iter().filter(|(_, e)| e.entry_type == "mcp-server").collect();
-    let agents: Vec<_> = lock.resolved.iter().filter(|(_, e)| e.entry_type == "agent").collect();
+    let mcps: Vec<_> = lock
+        .resolved
+        .iter()
+        .filter(|(_, e)| e.entry_type == "mcp-server")
+        .collect();
+    let agents: Vec<_> = lock
+        .resolved
+        .iter()
+        .filter(|(_, e)| e.entry_type == "agent")
+        .collect();
 
     if !mcps.is_empty() {
         println!("  MCP Servers:");
@@ -23,7 +31,9 @@ pub fn run() -> Result<()> {
     }
 
     if !agents.is_empty() {
-        if !mcps.is_empty() { println!(); }
+        if !mcps.is_empty() {
+            println!();
+        }
         println!("  Agents:");
         for (name, entry) in &agents {
             print_entry(name, entry, "    ");
@@ -39,15 +49,21 @@ pub fn run() -> Result<()> {
 }
 
 fn print_entry(name: &str, entry: &crate::manifest::ResolvedEntry, indent: &str) {
-    let icon = if entry.entry_type == "agent" { "🤖" } else { "⚙" };
+    let icon = if entry.entry_type == "agent" {
+        "🤖"
+    } else {
+        "⚙"
+    };
     println!("{}{} {} @ {}", indent, icon, name, entry.version);
     if let Some(t) = &entry.transport {
         let detail = match &t.url {
             Some(url) => format!("[{}] {}", t.transport_type, url),
-            None => format!("[{}] {} {}",
+            None => format!(
+                "[{}] {} {}",
                 t.transport_type,
                 t.command.as_deref().unwrap_or("?"),
-                t.args.join(" ")),
+                t.args.join(" ")
+            ),
         };
         println!("{}  └─ {}", indent, detail);
     }
