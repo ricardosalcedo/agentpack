@@ -1,0 +1,18 @@
+{
+  "name": "io.github.modelcontextprotocol/filesystem",
+  "version": "2.0.1",
+  "description": "MCP server for local filesystem access",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem@2.0.1", "/tmp"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "read_file", "description": "Read complete contents of a file"},
+    {"name": "write_file", "description": "Write content to a file"},
+    {"name": "list_directory", "description": "List directory contents"},
+    {"name": "search_files", "description": "Search for files matching a pattern"}
+  ]
+}

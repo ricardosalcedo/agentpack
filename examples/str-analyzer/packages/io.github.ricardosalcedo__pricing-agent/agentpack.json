@@ -1,0 +1,22 @@
+{
+  "name": "io.github.ricardosalcedo/pricing-agent",
+  "version": "1.0.0",
+  "description": "Agent that estimates STR property pricing",
+  "type": "agent",
+  "provides": {
+    "capabilities": ["property-valuation", "market-comparison"],
+    "protocol": "a2a"
+  },
+  "transport": {
+    "type": "stdio",
+    "command": "python3",
+    "args": ["agents/pricing.py"]
+  },
+  "dependencies": {
+    "io.github.modelcontextprotocol/filesystem": "^2.0.0"
+  },
+  "agents": {
+    "io.github.ricardosalcedo/research-agent": "^1.0.0"
+  },
+  "tools": []
+}

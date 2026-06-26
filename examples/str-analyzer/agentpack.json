@@ -1,0 +1,21 @@
+{
+  "name": "io.github.ricardosalcedo/str-analyzer",
+  "version": "0.1.0",
+  "description": "AI agent system for short-term rental property analysis",
+  "type": "composite",
+  "dependencies": {
+    "io.github.modelcontextprotocol/filesystem": "^2.0.0",
+    "io.github.modelcontextprotocol/fetch": "^2.0.0"
+  },
+  "agents": {
+    "io.github.ricardosalcedo/research-agent": {
+      "version": "^1.0.0",
+      "capabilities": ["web-research", "data-extraction"]
+    },
+    "io.github.ricardosalcedo/pricing-agent": {
+      "version": "^1.0.0",
+      "capabilities": ["property-valuation"]
+    }
+  },
+  "tools": []
+}

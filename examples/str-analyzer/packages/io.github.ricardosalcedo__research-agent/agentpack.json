@@ -1,0 +1,20 @@
+{
+  "name": "io.github.ricardosalcedo/research-agent",
+  "version": "1.0.0",
+  "description": "Agent that performs web research for property analysis",
+  "type": "agent",
+  "provides": {
+    "capabilities": ["web-research", "data-extraction"],
+    "protocol": "a2a"
+  },
+  "transport": {
+    "type": "stdio",
+    "command": "python3",
+    "args": ["agents/research.py"]
+  },
+  "dependencies": {
+    "io.github.modelcontextprotocol/fetch": "^2.0.0"
+  },
+  "agents": {},
+  "tools": []
+}

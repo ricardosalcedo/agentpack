@@ -1,0 +1,5 @@
+/target
+agentpack.lock
+agentpack.credentials.yaml
+claude_desktop_config.json
+.vscode/mcp.json
