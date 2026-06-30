@@ -1,0 +1,5 @@
+title: AgentPack
+description: Dependency manager for MCP servers and AI agents
+baseurl: /agentpack
+url: https://ricardosalcedo.github.io
+theme: jekyll-theme-cayman
