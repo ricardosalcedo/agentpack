@@ -1,0 +1,20 @@
+{
+  "name": "io.github.exa-labs/exa-mcp-server",
+  "version": "1.1.2",
+  "description": "MCP server for Exa AI search — neural search engine for finding relevant content on the web",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "exa-mcp-server"]
+  },
+  "provides": {
+    "capabilities": ["ai-search", "neural-search", "web-search", "semantic-search"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "exa_search", "description": "Search the web using Exa's neural search engine"},
+    {"name": "exa_find_similar", "description": "Find pages similar to a given URL"},
+    {"name": "exa_get_contents", "description": "Get the contents of specific URLs"}
+  ]
+}

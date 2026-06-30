@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-github",
+  "version": "2025.1.14",
+  "description": "MCP server for GitHub API — manage repos, issues, pull requests, and more",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-github"]
+  },
+  "provides": {
+    "capabilities": ["github", "git-hosting", "issues", "pull-requests", "repositories"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "create_or_update_file", "description": "Create or update a file in a GitHub repository"},
+    {"name": "search_repositories", "description": "Search for GitHub repositories"},
+    {"name": "create_issue", "description": "Create a new issue in a repository"},
+    {"name": "create_pull_request", "description": "Create a new pull request"},
+    {"name": "list_commits", "description": "List commits in a repository branch"}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "io.github.modelcontextprotocol/server-everything",
+  "version": "2024.11.5",
+  "description": "MCP test server that exercises all MCP features — tools, resources, prompts, and sampling",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-everything"]
+  },
+  "provides": {
+    "capabilities": ["testing", "mcp-reference", "all-features"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "echo", "description": "Echo back the input message"},
+    {"name": "add", "description": "Add two numbers together"},
+    {"name": "longRunningOperation", "description": "Start a long-running operation with progress updates"},
+    {"name": "sampleLLM", "description": "Sample from an LLM via MCP sampling"}
+  ]
+}

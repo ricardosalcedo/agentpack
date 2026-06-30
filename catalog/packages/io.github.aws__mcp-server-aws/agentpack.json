@@ -1,0 +1,22 @@
+{
+  "name": "io.github.aws/mcp-server-aws",
+  "version": "0.4.1",
+  "description": "AWS MCP server — interact with AWS services including S3, Lambda, CloudFormation, and more",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@aws/mcp-server-aws"]
+  },
+  "provides": {
+    "capabilities": ["aws", "cloud-infrastructure", "s3", "lambda", "cloudformation"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "aws_s3_list", "description": "List S3 buckets or objects in a bucket"},
+    {"name": "aws_lambda_invoke", "description": "Invoke a Lambda function"},
+    {"name": "aws_cfn_describe_stacks", "description": "Describe CloudFormation stacks"},
+    {"name": "aws_s3_get_object", "description": "Get an object from S3"},
+    {"name": "aws_sts_get_caller_identity", "description": "Get the current AWS caller identity"}
+  ]
+}

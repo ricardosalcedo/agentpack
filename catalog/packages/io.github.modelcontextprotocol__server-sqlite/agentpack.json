@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-sqlite",
+  "version": "2024.11.5",
+  "description": "MCP server for SQLite — query and manage SQLite databases",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-sqlite"]
+  },
+  "provides": {
+    "capabilities": ["database", "sqlite", "sql-query"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "read_query", "description": "Execute a SELECT query on the SQLite database"},
+    {"name": "write_query", "description": "Execute an INSERT, UPDATE, or DELETE query"},
+    {"name": "create_table", "description": "Create a new table in the database"},
+    {"name": "list_tables", "description": "List all tables in the SQLite database"},
+    {"name": "describe_table", "description": "Get the schema of a specific table"}
+  ]
+}

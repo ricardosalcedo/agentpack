@@ -356,3 +356,209 @@ mod tests {
         assert_eq!(lock.resolved.len(), 2);
     }
 }
+
+// === Additional tests for v0.3 features ===
+
+#[cfg(test)]
+mod tests_v03 {
+    use crate::manifest::*;
+    use crate::resolver;
+    use std::collections::BTreeMap;
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn test_dir(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("agentpack_v03_{}", name));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).expect("create");
+        dir
+    }
+
+    #[test]
+    fn test_lockfile_filter_by_profile() {
+        let manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name": "t", "version": "1.0.0",
+            "dependencies": {"a": "^1.0.0", "b": "^2.0.0", "c": "^3.0.0"},
+            "profiles": {"small": {"dependencies": ["a"], "agents": []}},
+            "agents": {}, "tools": []
+        }"#,
+        )
+        .expect("parse");
+
+        let lock = LockFile {
+            lock_version: 1,
+            resolved: BTreeMap::from([
+                (
+                    "a".into(),
+                    ResolvedEntry {
+                        version: "1.0.0".into(),
+                        entry_type: "mcp-server".into(),
+                        source: Source {
+                            source_type: "npm".into(),
+                            package: None,
+                            version: None,
+                        },
+                        integrity: None,
+                        transport: None,
+                        dependencies: BTreeMap::new(),
+                        agents: BTreeMap::new(),
+                        provides: None,
+                    },
+                ),
+                (
+                    "b".into(),
+                    ResolvedEntry {
+                        version: "2.0.0".into(),
+                        entry_type: "mcp-server".into(),
+                        source: Source {
+                            source_type: "npm".into(),
+                            package: None,
+                            version: None,
+                        },
+                        integrity: None,
+                        transport: None,
+                        dependencies: BTreeMap::new(),
+                        agents: BTreeMap::new(),
+                        provides: None,
+                    },
+                ),
+                (
+                    "c".into(),
+                    ResolvedEntry {
+                        version: "3.0.0".into(),
+                        entry_type: "mcp-server".into(),
+                        source: Source {
+                            source_type: "npm".into(),
+                            package: None,
+                            version: None,
+                        },
+                        integrity: None,
+                        transport: None,
+                        dependencies: BTreeMap::new(),
+                        agents: BTreeMap::new(),
+                        provides: None,
+                    },
+                ),
+            ]),
+        };
+
+        let filtered = lock.filter_by_profile(&manifest, "small");
+        assert_eq!(filtered.resolved.len(), 1);
+        assert!(filtered.resolved.contains_key("a"));
+    }
+
+    #[test]
+    fn test_multiple_capabilities_resolution() {
+        let dir = test_dir("multi_cap");
+        std::env::set_current_dir(&dir).expect("cd");
+
+        fs::create_dir_all("packages/io.github.x__search").expect("mkdir");
+        fs::write(
+            "packages/io.github.x__search/agentpack.json",
+            r#"{
+            "name": "io.github.x/search", "version": "1.0.0", "type": "mcp-server",
+            "provides": {"capabilities": ["web-search", "ai-search"]},
+            "dependencies": {}, "tools": []
+        }"#,
+        )
+        .expect("w");
+
+        fs::create_dir_all("packages/io.github.y__db").expect("mkdir");
+        fs::write(
+            "packages/io.github.y__db/agentpack.json",
+            r#"{
+            "name": "io.github.y/db", "version": "2.0.0", "type": "mcp-server",
+            "provides": {"capabilities": ["database", "sql"]},
+            "dependencies": {}, "tools": []
+        }"#,
+        )
+        .expect("w");
+
+        let mut manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name": "t", "version": "1.0.0",
+            "dependencies": {},
+            "requires": [{"capability": "web-search"}, {"capability": "database"}],
+            "agents": {}, "tools": []
+        }"#,
+        )
+        .expect("parse");
+
+        manifest.resolve_capabilities().expect("resolve");
+        assert_eq!(
+            manifest.requires[0].resolved_by.as_deref(),
+            Some("io.github.x/search")
+        );
+        assert_eq!(
+            manifest.requires[1].resolved_by.as_deref(),
+            Some("io.github.y/db")
+        );
+        assert_eq!(manifest.dependencies.len(), 2);
+    }
+
+    #[test]
+    fn test_manifest_with_profiles_serialization() {
+        let json = r#"{
+            "name": "t", "version": "1.0.0",
+            "dependencies": {"a": "^1.0.0"},
+            "profiles": {
+                "dev": {"dependencies": ["a"], "agents": [], "description": "Dev only"}
+            },
+            "agents": {}, "tools": []
+        }"#;
+        let m: Manifest = serde_json::from_str(json).expect("parse");
+        assert_eq!(m.profiles.len(), 1);
+        assert_eq!(m.profiles["dev"].description.as_deref(), Some("Dev only"));
+    }
+
+    #[test]
+    fn test_resolve_empty_manifest() {
+        let dir = test_dir("empty_manifest");
+        std::env::set_current_dir(&dir).expect("cd");
+        let manifest: Manifest = serde_json::from_str(
+            r#"{"name":"t","version":"1.0.0","dependencies":{},"agents":{},"tools":[]}"#,
+        )
+        .expect("p");
+        let lock = resolver::resolve(&manifest, None).expect("resolve");
+        assert!(lock.resolved.is_empty());
+    }
+
+    #[test]
+    fn test_profile_nonexistent_returns_all() {
+        let manifest: Manifest = serde_json::from_str(
+            r#"{
+            "name":"t","version":"1.0.0",
+            "dependencies":{"a":"^1.0.0","b":"^2.0.0"},
+            "profiles":{},
+            "agents":{},"tools":[]
+        }"#,
+        )
+        .expect("p");
+        // Non-existent profile returns all deps
+        let deps = manifest.deps_for_profile(Some("nonexistent"));
+        assert_eq!(deps.len(), 2);
+    }
+
+    #[test]
+    fn test_transport_clone() {
+        let t = Transport {
+            transport_type: "stdio".into(),
+            command: Some("node".into()),
+            args: vec!["a".into()],
+            url: None,
+        };
+        let t2 = t.clone();
+        assert_eq!(t.command, t2.command);
+        assert_eq!(t.args, t2.args);
+    }
+
+    #[test]
+    fn test_integrity_different_inputs() {
+        let h1 = resolver::compute_integrity("package-a@1.0.0");
+        let h2 = resolver::compute_integrity("package-a@1.0.1");
+        assert_ne!(h1, h2);
+        // Same input always same output
+        assert_eq!(h1, resolver::compute_integrity("package-a@1.0.0"));
+    }
+}

@@ -75,6 +75,15 @@ enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
     },
+    /// Check for dependency updates
+    Update,
+    /// Check environment and project health
+    Doctor,
+    /// Search for MCP servers in the catalog
+    Search {
+        /// Search query (name, capability, tool name)
+        query: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -94,5 +103,8 @@ fn main() -> Result<()> {
             command,
             args,
         } => commands::import::run(&name, &command, &args),
+        Commands::Update => commands::update::run(),
+        Commands::Doctor => commands::doctor::run(),
+        Commands::Search { query } => commands::search::run(&query),
     }
 }

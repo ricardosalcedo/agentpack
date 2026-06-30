@@ -1,0 +1,19 @@
+{
+  "name": "io.github.modelcontextprotocol/server-brave-search",
+  "version": "2024.11.5",
+  "description": "MCP server for Brave Search API — web and local search capabilities",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-brave-search"]
+  },
+  "provides": {
+    "capabilities": ["web-search", "local-search", "brave-search"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "brave_web_search", "description": "Perform a web search using Brave Search API"},
+    {"name": "brave_local_search", "description": "Search for local businesses and places"}
+  ]
+}

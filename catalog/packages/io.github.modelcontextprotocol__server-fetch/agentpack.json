@@ -1,0 +1,19 @@
+{
+  "name": "io.github.modelcontextprotocol/server-fetch",
+  "version": "2024.11.5",
+  "description": "MCP server for fetching web content — retrieve and convert web pages to markdown",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-fetch"]
+  },
+  "provides": {
+    "capabilities": ["web-fetch", "url-content", "html-to-markdown"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "fetch", "description": "Fetch a URL and return the content as markdown or raw HTML"},
+    {"name": "fetch_raw", "description": "Fetch a URL and return raw response without conversion"}
+  ]
+}

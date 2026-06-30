@@ -1,0 +1,21 @@
+{
+  "name": "io.github.mendableai/firecrawl-mcp-server",
+  "version": "1.5.0",
+  "description": "MCP server for Firecrawl — crawl websites, scrape pages, and extract structured data",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "firecrawl-mcp-server"]
+  },
+  "provides": {
+    "capabilities": ["web-crawling", "web-scraping", "data-extraction"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "firecrawl_scrape", "description": "Scrape a single URL and return clean markdown content"},
+    {"name": "firecrawl_crawl", "description": "Crawl a website starting from a URL"},
+    {"name": "firecrawl_map", "description": "Map all URLs on a website"},
+    {"name": "firecrawl_extract", "description": "Extract structured data from a page using a schema"}
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "io.github.upstash/mcp-server",
+  "version": "0.1.5",
+  "description": "MCP server for Upstash Redis — manage serverless Redis databases, run commands, and manage keys",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@upstash/mcp-server"]
+  },
+  "provides": {
+    "capabilities": ["redis", "cache", "key-value-store", "serverless-database"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "redis_set", "description": "Set a key-value pair in Redis"},
+    {"name": "redis_get", "description": "Get the value of a key from Redis"},
+    {"name": "redis_delete", "description": "Delete a key from Redis"},
+    {"name": "redis_list_keys", "description": "List keys matching a pattern"},
+    {"name": "redis_run_command", "description": "Run a raw Redis command"}
+  ]
+}

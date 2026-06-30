@@ -1,0 +1,19 @@
+{
+  "name": "io.github.tavily/tavily-mcp-server",
+  "version": "0.1.4",
+  "description": "MCP server for Tavily AI search — optimized search engine for AI agents with real-time results",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "tavily-mcp-server"]
+  },
+  "provides": {
+    "capabilities": ["ai-search", "web-search", "research"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "tavily_search", "description": "Search the web using Tavily's AI-optimized search engine"},
+    {"name": "tavily_extract", "description": "Extract content from one or more URLs"}
+  ]
+}

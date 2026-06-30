@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-slack",
+  "version": "2024.11.5",
+  "description": "MCP server for Slack — send messages, manage channels, and interact with workspaces",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-slack"]
+  },
+  "provides": {
+    "capabilities": ["slack", "messaging", "channels", "workspace"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "send_message", "description": "Send a message to a Slack channel"},
+    {"name": "list_channels", "description": "List available channels in the workspace"},
+    {"name": "get_channel_history", "description": "Retrieve recent messages from a channel"},
+    {"name": "reply_to_thread", "description": "Reply to a message thread"},
+    {"name": "search_messages", "description": "Search messages across the workspace"}
+  ]
+}

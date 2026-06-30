@@ -1,5 +1,6 @@
 pub mod add;
 pub mod audit;
+pub mod doctor;
 pub mod export;
 pub mod fetch;
 pub mod graph;
@@ -7,4 +8,6 @@ pub mod import;
 pub mod init;
 pub mod install;
 pub mod run;
+pub mod search;
+pub mod update;
 pub mod validate;

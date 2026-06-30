@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-git",
+  "version": "2024.11.5",
+  "description": "MCP server for Git operations — clone, commit, diff, log, and branch management",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-git"]
+  },
+  "provides": {
+    "capabilities": ["git", "version-control", "repository-management"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "git_status", "description": "Show the working tree status of a git repository"},
+    {"name": "git_log", "description": "Show commit log history"},
+    {"name": "git_diff", "description": "Show changes between commits or working tree"},
+    {"name": "git_commit", "description": "Create a new commit with staged changes"},
+    {"name": "git_clone", "description": "Clone a repository to a local directory"}
+  ]
+}

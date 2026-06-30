@@ -1,0 +1,22 @@
+{
+  "name": "io.github.notionhq/notion-mcp-server",
+  "version": "1.6.1",
+  "description": "Official Notion MCP server — search, read, and manage Notion pages, databases, and blocks",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@notionhq/notion-mcp-server"]
+  },
+  "provides": {
+    "capabilities": ["notion", "documents", "databases", "knowledge-base"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "notion_search", "description": "Search across Notion pages and databases"},
+    {"name": "notion_read_page", "description": "Read the content of a Notion page"},
+    {"name": "notion_create_page", "description": "Create a new page in Notion"},
+    {"name": "notion_update_page", "description": "Update properties of a Notion page"},
+    {"name": "notion_query_database", "description": "Query a Notion database with filters"}
+  ]
+}

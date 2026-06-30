@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-memory",
+  "version": "2024.11.5",
+  "description": "MCP server for persistent memory using a knowledge graph — store and retrieve entities and relations",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-memory"]
+  },
+  "provides": {
+    "capabilities": ["memory", "knowledge-graph", "entity-storage"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "create_entities", "description": "Create new entities in the knowledge graph"},
+    {"name": "create_relations", "description": "Create relations between entities"},
+    {"name": "search_nodes", "description": "Search for nodes in the knowledge graph"},
+    {"name": "open_nodes", "description": "Retrieve specific nodes by name"},
+    {"name": "delete_entities", "description": "Delete entities from the knowledge graph"}
+  ]
+}

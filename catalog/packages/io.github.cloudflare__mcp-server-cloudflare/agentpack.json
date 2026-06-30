@@ -1,0 +1,22 @@
+{
+  "name": "io.github.cloudflare/mcp-server-cloudflare",
+  "version": "0.1.3",
+  "description": "MCP server for Cloudflare — manage Workers, KV, R2, D1, and DNS",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@cloudflare/mcp-server-cloudflare"]
+  },
+  "provides": {
+    "capabilities": ["cloudflare", "workers", "kv-storage", "dns", "edge-computing"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "worker_list", "description": "List all Cloudflare Workers in the account"},
+    {"name": "worker_deploy", "description": "Deploy a Worker script"},
+    {"name": "kv_get", "description": "Get a value from Cloudflare KV"},
+    {"name": "kv_put", "description": "Put a value into Cloudflare KV"},
+    {"name": "dns_list_records", "description": "List DNS records for a zone"}
+  ]
+}

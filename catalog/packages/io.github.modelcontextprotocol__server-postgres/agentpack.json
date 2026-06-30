@@ -1,0 +1,20 @@
+{
+  "name": "io.github.modelcontextprotocol/server-postgres",
+  "version": "2024.11.5",
+  "description": "MCP server for PostgreSQL — query databases with read-only access",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-postgres"]
+  },
+  "provides": {
+    "capabilities": ["database", "postgresql", "sql-query"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "query", "description": "Execute a read-only SQL query against the PostgreSQL database"},
+    {"name": "list_tables", "description": "List all tables in the database"},
+    {"name": "describe_table", "description": "Get the schema of a specific table"}
+  ]
+}

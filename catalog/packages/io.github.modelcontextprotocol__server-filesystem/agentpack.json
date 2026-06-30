@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-filesystem",
+  "version": "2024.11.5",
+  "description": "MCP server for filesystem access — read, write, and manage files and directories",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-filesystem"]
+  },
+  "provides": {
+    "capabilities": ["filesystem", "file-read", "file-write", "directory-listing"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "read_file", "description": "Read the contents of a file"},
+    {"name": "write_file", "description": "Write content to a file"},
+    {"name": "list_directory", "description": "List files and directories at a path"},
+    {"name": "move_file", "description": "Move or rename a file"},
+    {"name": "search_files", "description": "Search for files matching a pattern"}
+  ]
+}

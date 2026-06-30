@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-puppeteer",
+  "version": "2024.11.5",
+  "description": "MCP server for browser automation with Puppeteer — navigate, screenshot, and interact with web pages",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
+  },
+  "provides": {
+    "capabilities": ["browser-automation", "screenshots", "web-navigation", "page-interaction"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "puppeteer_navigate", "description": "Navigate to a URL in the browser"},
+    {"name": "puppeteer_screenshot", "description": "Take a screenshot of the current page"},
+    {"name": "puppeteer_click", "description": "Click an element on the page"},
+    {"name": "puppeteer_fill", "description": "Fill in a form field"},
+    {"name": "puppeteer_evaluate", "description": "Execute JavaScript in the browser console"}
+  ]
+}

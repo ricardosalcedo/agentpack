@@ -1,0 +1,22 @@
+{
+  "name": "io.github.modelcontextprotocol/server-docker",
+  "version": "2024.11.5",
+  "description": "MCP server for Docker — manage containers, images, volumes, and networks",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-docker"]
+  },
+  "provides": {
+    "capabilities": ["docker", "containers", "images", "orchestration"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "list_containers", "description": "List running Docker containers"},
+    {"name": "create_container", "description": "Create and start a new container"},
+    {"name": "stop_container", "description": "Stop a running container"},
+    {"name": "list_images", "description": "List available Docker images"},
+    {"name": "container_logs", "description": "Get logs from a container"}
+  ]
+}

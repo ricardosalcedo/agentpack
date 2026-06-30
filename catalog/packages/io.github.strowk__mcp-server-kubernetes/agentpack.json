@@ -1,0 +1,22 @@
+{
+  "name": "io.github.strowk/mcp-server-kubernetes",
+  "version": "0.3.1",
+  "description": "MCP server for Kubernetes — manage pods, deployments, services, and cluster resources",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "mcp-server-kubernetes"]
+  },
+  "provides": {
+    "capabilities": ["kubernetes", "container-orchestration", "cluster-management"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "list_pods", "description": "List pods in a namespace"},
+    {"name": "get_pod_logs", "description": "Get logs from a pod"},
+    {"name": "list_deployments", "description": "List deployments in a namespace"},
+    {"name": "apply_manifest", "description": "Apply a Kubernetes YAML manifest"},
+    {"name": "list_namespaces", "description": "List all namespaces in the cluster"}
+  ]
+}

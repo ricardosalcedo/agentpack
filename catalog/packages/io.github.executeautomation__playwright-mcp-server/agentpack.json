@@ -1,0 +1,22 @@
+{
+  "name": "io.github.executeautomation/playwright-mcp-server",
+  "version": "0.0.19",
+  "description": "MCP server for browser automation with Playwright — navigate, interact, and test web applications",
+  "type": "mcp-server",
+  "transport": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@executeautomation/playwright-mcp-server"]
+  },
+  "provides": {
+    "capabilities": ["browser-automation", "playwright", "web-testing", "screenshots"]
+  },
+  "dependencies": {},
+  "tools": [
+    {"name": "playwright_navigate", "description": "Navigate to a URL in the browser"},
+    {"name": "playwright_screenshot", "description": "Take a screenshot of the current page"},
+    {"name": "playwright_click", "description": "Click an element on the page using a selector"},
+    {"name": "playwright_fill", "description": "Fill in a form input field"},
+    {"name": "playwright_evaluate", "description": "Execute JavaScript code in the browser"}
+  ]
+}
